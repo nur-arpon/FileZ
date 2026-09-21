@@ -8,7 +8,7 @@
 use serde::Serialize;
 use std::sync::OnceLock;
 
-pub const STARTUP_TASK_ID: &str = "TidyUpStartupTask";
+pub const STARTUP_TASK_ID: &str = "FileZStartupTask";
 
 static PACKAGED: OnceLock<bool> = OnceLock::new();
 
@@ -43,9 +43,9 @@ pub fn app_may_change(s: StartupState) -> bool { matches!(s, StartupState::Enabl
 pub fn locked_note(s: StartupState) -> &'static str {
     match s {
         StartupState::Enabled | StartupState::Disabled => "",
-        StartupState::DisabledByUser => "You turned TidyUp off in Task Manager's Startup apps, and Windows does not let an app switch itself back on. Turn it on there and this comes back.",
+        StartupState::DisabledByUser => "You turned FileZ off in Task Manager's Startup apps, and Windows does not let an app switch itself back on. Turn it on there and this comes back.",
         StartupState::DisabledByPolicy => "Your organisation's policy decides this one, so the switch is off here.",
-        StartupState::EnabledByPolicy => "Your organisation's policy starts TidyUp with Windows, so it cannot be turned off here.",
+        StartupState::EnabledByPolicy => "Your organisation's policy starts FileZ with Windows, so it cannot be turned off here.",
         StartupState::Unavailable => "Windows manages this for the Store version. Settings > Apps > Startup has the switch.",
     }
 }

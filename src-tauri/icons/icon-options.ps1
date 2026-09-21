@@ -1,4 +1,4 @@
-# Draws four TidyUp icon candidates at 512 px and a side-by-side sheet for choosing.
+# Draws four FileZ icon candidates at 512 px and a side-by-side sheet for choosing.
 Add-Type -AssemblyName System.Drawing
 $S = 512
 function RoundRect([float]$x, [float]$y, [float]$w, [float]$h, [float]$r) {

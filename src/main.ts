@@ -49,7 +49,7 @@ function render() {
   app.innerHTML = `
     <div class="shell">
       <aside class="side">
-        <div class="brand">TidyUp</div>
+        <div class="brand">FileZ</div>
         ${nav("home", "Home")}${nav("rules", "Rules")}${nav("folders", "Folders")}${nav("history", "History")}${nav("settings", "Settings")}
         <div class="spacer"></div>
         <div class="status">${snap.paused ? "Paused" : "Watching " + snap.config.watched.length + (snap.config.watched.length === 1 ? " folder" : " folders")}<br>v${snap.version}</div>
@@ -71,7 +71,7 @@ async function renderSetup() {
     const known = await invoke<[string, string][]>("known_folders");
     const rows = known.map(([label, path]) => `<label class="item"><input type="checkbox" data-watch="${esc(path)}" ${d.watched.includes(path) ? "checked" : ""}> <div class="grow"><div class="name">${label}</div><div class="sub">${esc(path)}</div></div></label>`).join("");
     const extra = d.watched.filter((w) => !known.some(([, p]) => p === w)).map((w) => `<label class="item"><input type="checkbox" data-watch="${esc(w)}" checked> <div class="grow"><div class="name">${esc(base(w))}</div><div class="sub">${esc(w)}</div></div></label>`).join("");
-    body = `<h1>Which folders should TidyUp watch?</h1><p>New files landing in these folders get filed. Folders inside them are never touched.</p>
+    body = `<h1>Which folders should FileZ watch?</h1><p>New files landing in these folders get filed. Folders inside them are never touched.</p>
       <div class="card"><div class="list">${rows}${extra}</div><div class="row" style="margin-top:12px"><button class="pill" id="add-watch">Choose another folder</button></div></div>`;
   } else if (setupStep === 1) {
     const chips = d.rules.map((r) => `<button class="pill ${r.enabled ? "on" : ""}" data-rule="${r.id}">${esc(r.name)}</button>`).join("");
@@ -99,7 +99,7 @@ async function renderSetup() {
   all("[data-rule]").forEach((b) => (b.onclick = () => { const r = d.rules.find((x) => x.id === b.dataset.rule)!; r.enabled = !r.enabled; existingCount = null; renderSetup(); }));
   el("#dest-inside")?.addEventListener("click", () => { d.dest_root = d.watched[0] ?? d.dest_root; existingCount = null; renderSetup(); });
   all("[data-existing]").forEach((b) => (b.onclick = () => { existingChoice = b.dataset.existing as "new" | "all"; renderSetup(); }));
-  all("[data-drive]").forEach((b) => (b.onclick = () => { d.dest_root = b.dataset.drive + "TidyUp"; existingCount = null; renderSetup(); }));
+  all("[data-drive]").forEach((b) => (b.onclick = () => { d.dest_root = b.dataset.drive + "FileZ"; existingCount = null; renderSetup(); }));
   el("#dest-pick")?.addEventListener("click", async () => { const p = await pickFolder({ directory: true }); if (typeof p === "string") { d.dest_root = p; existingCount = null; renderSetup(); } });
   el("#back").onclick = () => { setupStep--; renderSetup(); };
   el("#next").onclick = async () => {
@@ -113,7 +113,7 @@ async function renderSetup() {
 // ---------- home ----------
 function renderHome(main: HTMLElement) {
   const c = snap.config;
-  const pauseText = snap.paused ? (c.paused_until ? `Paused until ${new Date(c.paused_until).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}` : "Paused until you turn it back on") : "Tidy is on";
+  const pauseText = snap.paused ? (c.paused_until ? `Paused until ${new Date(c.paused_until).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}` : "Paused until you turn it back on") : "FileZ is on";
   const recent = snap.recent.slice(0, 12);
   main.innerHTML = `
     <div class="grid2">
@@ -210,7 +210,7 @@ function renderSettings(main: HTMLElement) {
   const ai = [["rules", "Rules only (no AI)"], ["gemini", "Gemini API key"], ["local", "Your own local AI (Ollama)"], ["builtin", "Tiny built-in AI for naming files"]].map(([k, l]) => `<button class="pill ${c.ai_mode === k ? "on" : ""}" ${k === "rules" ? "" : "disabled"}>${l}</button>`).join("");
   const st = snap.startup;
   const startupOn = st.packaged ? st.state === "enabled" || st.state === "enabled-by-policy" : c.autostart;
-  const startupRow = `<div class="item"><div class="grow"><div class="name">Start with Windows</div><div class="sub">${st.locked ? esc(st.note) : "TidyUp sits in the tray and keeps watching."}</div></div><button class="toggle ${startupOn ? "on" : ""}" data-set="autostart" ${st.locked ? "disabled" : ""}></button></div>`;
+  const startupRow = `<div class="item"><div class="grow"><div class="name">Start with Windows</div><div class="sub">${st.locked ? esc(st.note) : "FileZ sits in the tray and keeps watching."}</div></div><button class="toggle ${startupOn ? "on" : ""}" data-set="autostart" ${st.locked ? "disabled" : ""}></button></div>`;
   main.innerHTML = `<h1>Settings</h1>
     <div class="card"><div class="list">${startupRow}${tog("notifications", "Show a note when a file is filed", "Small toast at the bottom of the screen with a Put back button.")}</div></div>
     <div class="card"><h2>Look</h2><div class="pills">${themes}</div> <button class="pill ghost" id="preview-toast">Preview a toast</button></div>

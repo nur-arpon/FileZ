@@ -1,4 +1,4 @@
-TidyUp Source-Available Licence
+FileZ Source-Available Licence
 Copyright (c) 2026 Nur Ifran Arpon. All rights reserved.
 
 This is NOT an open-source licence. It is not one of the licences approved by
@@ -26,7 +26,7 @@ verify what the app actually does — nothing more.
      its own app, a "clone", or a rebrand.
    - Remove or alter any copyright, licence, or attribution notice from the
      source code or from the app itself.
-   - Use Nur Ifran Arpon's name, "TidyUp", or any of the project's branding
+   - Use Nur Ifran Arpon's name, "FileZ", or any of the project's branding
      to imply endorsement of your own build or fork.
 
 3. Official builds
@@ -35,7 +35,7 @@ verify what the app actually does — nothing more.
    publishes himself:
 
    - GitHub Releases on this repository
-     (https://github.com/nur-arpon/TidyUp/releases), and
+     (https://github.com/nur-arpon/FileZ/releases), and
    - the Microsoft Store listing, once published.
 
    A build from anywhere else — including one you compiled yourself — is not
@@ -44,7 +44,7 @@ verify what the app actually does — nothing more.
 
 4. Third-party components
 
-   TidyUp is built on open-source libraries (Rust crates, npm packages, and
+   FileZ is built on open-source libraries (Rust crates, npm packages, and
    the Tauri framework, among others). Each of those keeps its own licence,
    unmodified by anything in this document. See THIRD-PARTY-NOTICES.md for the
    full list, including which of them require you to keep their own

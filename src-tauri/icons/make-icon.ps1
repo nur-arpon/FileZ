@@ -1,4 +1,4 @@
-# Draws the TidyUp icon at 1024 px: navy tile, three fanned indigo folders with earthy tabs (option I1).
+# Draws the FileZ icon at 1024 px: navy tile, three fanned indigo folders with earthy tabs (option I1).
 # Then `npx tauri icon src-tauri/icons/source.png` produces every size and the Store logos.
 Add-Type -AssemblyName System.Drawing
 $S = 1024; $k = 2.0

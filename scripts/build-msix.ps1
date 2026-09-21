@@ -1,5 +1,5 @@
 <#
-  build-msix.ps1 - lay out and pack TidyUp as an MSIX for the Microsoft Store.
+  build-msix.ps1 - lay out and pack FileZ as an MSIX for the Microsoft Store.
   Compact port of Spaceadom's script. ASCII ONLY in this file (Windows PowerShell 5.1
   reads a .ps1 without BOM as ANSI).
 
@@ -7,7 +7,7 @@
   structural test only; the Store re-signs on ingestion).
 
   Usage:  npm run build ; npm run tauri build ; npm run msix [-- -Sign]
-  Output: src-tauri/target/release/bundle/msix/TidyUp_<version>_x64.msix
+  Output: src-tauri/target/release/bundle/msix/FileZ_<version>_x64.msix
   Exit:   0 packed and validated, 1 error, 2 Windows SDK (MakeAppx) missing.
 #>
 [CmdletBinding()]
@@ -32,7 +32,7 @@ Say "version $version4, arch $Arch"
 
 # 2. identity
 $identityPath = Join-Path $MsixSrc 'identity.json'
-if (-not (Test-Path $identityPath)) { Die "src-tauri/msix/identity.json is missing. Copy identity.example.json and fill it from Partner Center > TidyUp > Product identity." }
+if (-not (Test-Path $identityPath)) { Die "src-tauri/msix/identity.json is missing. Copy identity.example.json and fill it from Partner Center > FileZ > Product identity." }
 $identity = Get-Content $identityPath -Raw | ConvertFrom-Json
 foreach ($f in 'name','publisher','publisherDisplayName') {
   if ([string]::IsNullOrWhiteSpace($identity.$f) -or $identity.$f -like '*PUT-*') { Die "identity.json '$f' is still a placeholder" }
@@ -99,7 +99,7 @@ function Find-SdkTool([string]$Name) {
 $makeappx = Find-SdkTool 'makeappx.exe'
 if (-not $makeappx) { Warn "MakeAppx.exe not found. Layout is complete at $Layout. Install the Windows SDK and re-run."; exit 2 }
 New-Item -ItemType Directory -Force -Path $OutDir | Out-Null
-$msix = Join-Path $OutDir "TidyUp_${version3}_${Arch}.msix"
+$msix = Join-Path $OutDir "FileZ_${version3}_${Arch}.msix"
 if (Test-Path $msix) { Remove-Item $msix -Force }
 & $makeappx pack /d $Layout /p $msix /o
 if ($LASTEXITCODE -ne 0) { Die "makeappx pack failed ($LASTEXITCODE)" }
@@ -109,9 +109,9 @@ if ($Sign) {
   $signtool = Find-SdkTool 'signtool.exe'
   if (-not $signtool) { Warn "SignTool.exe not found - package left unsigned" }
   else {
-    $pfx = Join-Path $MsixSrc 'test-signing.pfx'; $pw = 'tidyup-local-test'
+    $pfx = Join-Path $MsixSrc 'test-signing.pfx'; $pw = 'filez-local-test'
     if (-not (Test-Path $pfx)) {
-      $cert = New-SelfSignedCertificate -Type Custom -KeyUsage DigitalSignature -CertStoreLocation 'Cert:\CurrentUser\My' -Subject $identity.publisher -FriendlyName 'TidyUp LOCAL MSIX TEST - not for distribution' -TextExtension @('2.5.29.37={text}1.3.6.1.5.5.7.3.3', '2.5.29.19={text}')
+      $cert = New-SelfSignedCertificate -Type Custom -KeyUsage DigitalSignature -CertStoreLocation 'Cert:\CurrentUser\My' -Subject $identity.publisher -FriendlyName 'FileZ LOCAL MSIX TEST - not for distribution' -TextExtension @('2.5.29.37={text}1.3.6.1.5.5.7.3.3', '2.5.29.19={text}')
       Export-PfxCertificate -Cert "Cert:\CurrentUser\My\$($cert.Thumbprint)" -FilePath $pfx -Password (ConvertTo-SecureString $pw -Force -AsPlainText) | Out-Null
     }
     & $signtool sign /fd SHA256 /a /f $pfx /p $pw $msix

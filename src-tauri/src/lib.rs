@@ -160,7 +160,7 @@ fn preview_toast(app: AppHandle) {
 }
 
 fn build_tray(app: &AppHandle) -> tauri::Result<()> {
-    let open = MenuItemBuilder::with_id("open", "Open TidyUp").build(app)?;
+    let open = MenuItemBuilder::with_id("open", "Open FileZ").build(app)?;
     let now = MenuItemBuilder::with_id("tidy_now", "Tidy now").build(app)?;
     let pause = MenuItemBuilder::with_id("pause", "Pause for 1 hour").build(app)?;
     let resume = MenuItemBuilder::with_id("resume", "Resume").build(app)?;
@@ -168,7 +168,7 @@ fn build_tray(app: &AppHandle) -> tauri::Result<()> {
     let menu = MenuBuilder::new(app).items(&[&open, &now, &pause, &resume]).separator().item(&quit).build()?;
     TrayIconBuilder::with_id("main")
         .icon(app.default_window_icon().cloned().expect("icon"))
-        .tooltip("TidyUp")
+        .tooltip("FileZ")
         .menu(&menu)
         .show_menu_on_left_click(false)
         .on_menu_event(|app, ev| {
@@ -228,7 +228,7 @@ pub fn run() {
             Ok(())
         })
         .build(tauri::generate_context!())
-        .expect("error while building TidyUp")
+        .expect("error while building FileZ")
         // closing the last window must not quit (tray app); an explicit Quit (code set) must
         .run(|_app, ev| { if let tauri::RunEvent::ExitRequested { api, code, .. } = ev { if code.is_none() { api.prevent_exit(); } } });
 }

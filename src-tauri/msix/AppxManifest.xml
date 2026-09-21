@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-  TidyUp's Microsoft Store (MSIX) package manifest. A template: the double-brace placeholders are
+  FileZ's Microsoft Store (MSIX) package manifest. A template: the double-brace placeholders are
   filled by scripts/build-msix.ps1 from src-tauri/msix/identity.json and package.json.
   Same approach as Spaceadom (Tauri v2 has no MSIX target; MakeAppx packs a plain layout).
 
@@ -25,7 +25,7 @@
     ProcessorArchitecture="{{ARCH}}" />
 
   <Properties>
-    <DisplayName>TidyUp</DisplayName>
+    <DisplayName>FileZ</DisplayName>
     <PublisherDisplayName>{{PUBLISHER_DISPLAY_NAME}}</PublisherDisplayName>
     <Logo>Assets\StoreLogo.png</Logo>
   </Properties>
@@ -39,9 +39,9 @@
   </Resources>
 
   <Applications>
-    <Application Id="TidyUp" Executable="tidy.exe" EntryPoint="Windows.FullTrustApplication">
+    <Application Id="FileZ" Executable="tidy.exe" EntryPoint="Windows.FullTrustApplication">
       <uap:VisualElements
-        DisplayName="TidyUp"
+        DisplayName="FileZ"
         Description="Files your downloads into plainly named folders, automatically. Nothing is ever deleted."
         BackgroundColor="transparent"
         Square150x150Logo="Assets\Square150x150Logo.png"
@@ -50,11 +50,11 @@
           Wide310x150Logo="Assets\Wide310x150Logo.png"
           Square71x71Logo="Assets\Square71x71Logo.png"
           Square310x310Logo="Assets\Square310x310Logo.png"
-          ShortName="TidyUp" />
+          ShortName="FileZ" />
       </uap:VisualElements>
       <Extensions>
         <desktop:Extension Category="windows.startupTask" Executable="tidy.exe" EntryPoint="Windows.FullTrustApplication">
-          <desktop:StartupTask TaskId="TidyUpStartupTask" Enabled="true" DisplayName="TidyUp" />
+          <desktop:StartupTask TaskId="FileZStartupTask" Enabled="true" DisplayName="FileZ" />
         </desktop:Extension>
       </Extensions>
     </Application>

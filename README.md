@@ -1,11 +1,11 @@
-# TidyUp
+# FileZ
 
 *Source-visible, proprietary — see [LICENSE](LICENSE).*
 
 **Your Downloads folder, tidy by itself. Nothing is ever deleted, and every move has a
 Put back button.**
 
-TidyUp is a small Windows app that watches the folders you choose (Downloads by default)
+FileZ is a small Windows app that watches the folders you choose (Downloads by default)
 and quietly moves new files into folders you can read at a glance: Installers, Zip files,
 Pictures, Videos, Music, PDFs, Documents, Spreadsheets, Game files, 3D models, and any rule
 you add yourself.
@@ -14,6 +14,22 @@ No AI, no account, no internet. Rules only: a file's type, a word in its name, o
 website it was downloaded from. Every decision in the app is a switch or a pill.
 
 Windows 10/11, x64. Built with Rust and Tauri v2. No analytics, no ads, no network code.
+
+---
+
+## Screenshots
+
+![Your Downloads folder, tidy by itself.](docs/screenshots/slide-01.jpg)
+
+![Three taps of setup. Then forget it exists.](docs/screenshots/slide-02.jpg)
+
+![Rules you can actually read.](docs/screenshots/slide-03.jpg)
+
+![Changed your mind? Put it back.](docs/screenshots/slide-04.jpg)
+
+![Light, dark, or follow Windows.](docs/screenshots/slide-05.jpg)
+
+![Every setting is a switch.](docs/screenshots/slide-06.jpg)
 
 ---
 
@@ -38,7 +54,7 @@ Windows 10/11, x64. Built with Rust and Tauri v2. No analytics, no ads, no netwo
 
 ## Install
 
-Download the latest **`TidyUp_*_x64-setup.exe`** from
+Download the latest **`FileZ_*_x64-setup.exe`** from
 [Releases](../../releases) and run it. It installs into your own user folder and never asks
 for an admin password. Windows will warn that the publisher is unknown, because the build is
 not code-signed: choose **More info → Run anyway**.
@@ -47,7 +63,7 @@ A Microsoft Store listing is in progress.
 
 ## Privacy and security
 
-TidyUp has no network code and cannot send anything anywhere. What it reads and writes is
+FileZ has no network code and cannot send anything anywhere. What it reads and writes is
 spelled out in [PRIVACY.md](PRIVACY.md). To report a vulnerability, see
 [SECURITY.md](SECURITY.md).
 

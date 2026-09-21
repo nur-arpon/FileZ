@@ -1,8 +1,8 @@
 # Third-Party Notices
 
-TidyUp is built with the Rust crates and npm packages listed below, generated from
+FileZ is built with the Rust crates and npm packages listed below, generated from
 `cargo license` (Rust, non-dev dependencies) and `npx license-checker --production` (npm).
-Each package remains under its own licence; nothing in TidyUp's LICENSE changes the terms below.
+Each package remains under its own licence; nothing in FileZ's LICENSE changes the terms below.
 
 Total: **527** packages (524 Rust crates, 3 npm packages).
 

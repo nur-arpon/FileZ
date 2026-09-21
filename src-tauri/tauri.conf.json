@@ -1,8 +1,8 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
-  "productName": "TidyUp",
+  "productName": "FileZ",
   "version": "1.0.0",
-  "identifier": "com.arpon.tidy",
+  "identifier": "com.spacez.filez",
   "build": {
     "beforeDevCommand": "npm run dev",
     "devUrl": "http://localhost:1430",
@@ -14,7 +14,7 @@
     "windows": [
       {
         "label": "main",
-        "title": "TidyUp",
+        "title": "FileZ",
         "width": 1000,
         "height": 680,
         "minWidth": 900,
@@ -27,7 +27,7 @@
       {
         "label": "toast",
         "url": "toast.html",
-        "title": "TidyUp toast",
+        "title": "FileZ toast",
         "transparent": true,
         "decorations": false,
         "alwaysOnTop": true,
@@ -50,7 +50,7 @@
     "icon": ["icons/32x32.png", "icons/128x128.png", "icons/128x128@2x.png", "icons/icon.icns", "icons/icon.ico"],
     "category": "Utility",
     "shortDescription": "Files your downloads into plainly named folders, automatically. Nothing is ever deleted.",
-    "longDescription": "TidyUp watches your Downloads folder and quietly moves installers, pictures, videos, documents and more into folders you can read at a glance. Nothing is ever deleted and every move can be undone.",
+    "longDescription": "FileZ watches your Downloads folder and quietly moves installers, pictures, videos, documents and more into folders you can read at a glance. Nothing is ever deleted and every move can be undone.",
     "windows": {
       "webviewInstallMode": { "type": "downloadBootstrapper" },
       "nsis": { "installMode": "currentUser" }

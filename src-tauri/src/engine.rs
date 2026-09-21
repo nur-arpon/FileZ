@@ -334,8 +334,8 @@ pub fn folder_tree(state: &State) -> Vec<FolderInfo> {
     out
 }
 
-/// %APPDATA%\com.arpon.tidy — the same folder Tauri's app_data_dir() resolves to on Windows,
+/// %APPDATA%\com.spacez.filez — the same folder Tauri's app_data_dir() resolves to on Windows,
 /// computed without an AppHandle so the state can exist before the app is built.
 pub fn data_dir() -> PathBuf {
-    dirs::data_dir().unwrap_or_else(|| PathBuf::from(".")).join("com.arpon.tidy")
+    dirs::data_dir().unwrap_or_else(|| PathBuf::from(".")).join("com.spacez.filez")
 }
