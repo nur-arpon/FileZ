@@ -1,0 +1,15 @@
+node_modules
+dist
+src-tauri/target
+src-tauri/gen/schemas
+
+# Store packaging: the template and example are committed, the rest is generated or account-specific
+*.msix
+src-tauri/msix/identity.json
+src-tauri/msix/layout/
+src-tauri/msix/unpacked/
+src-tauri/msix/*.pfx
+# private notes
+PROJECT_STATUS.md
+AI_HANDOFF.md
+share/

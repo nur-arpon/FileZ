@@ -1,0 +1,9 @@
+{
+  "_README": [
+    "Copy to identity.json. Partner Center > TidyUp > Product management > Product identity gives all three.",
+    "name = Package/Identity/Name, publisher = Package/Identity/Publisher (CN=...), publisherDisplayName = Package/Properties/PublisherDisplayName."
+  ],
+  "name": "PUT-PACKAGE-IDENTITY-NAME-HERE",
+  "publisher": "CN=PUT-PUBLISHER-ID-HERE",
+  "publisherDisplayName": "SpaceZ"
+}

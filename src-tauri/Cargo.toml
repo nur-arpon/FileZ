@@ -1,0 +1,39 @@
+[package]
+name = "tidy"
+version = "0.1.0"
+description = "Tidy — files new downloads into plainly named folders, automatically"
+authors = ["Arpon"]
+edition = "2021"
+rust-version = "1.77"
+
+[lib]
+name = "tidy_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[features]
+default = ["custom-protocol"]
+custom-protocol = ["tauri/custom-protocol"]
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+tauri = { version = "2", features = ["tray-icon", "image-png"] }
+tauri-plugin-autostart = "2"
+tauri-plugin-dialog = "2"
+tauri-plugin-opener = "2"
+tauri-plugin-single-instance = "2"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+notify = "7"
+dirs = "5"
+log = "0.4"
+
+[target.'cfg(windows)'.dependencies]
+windows = { version = "0.58", features = ["Win32_Foundation", "Win32_Storage_FileSystem", "Win32_Storage_Packaging_Appx", "ApplicationModel", "Foundation"] }
+
+[profile.release]
+opt-level = "s"
+lto = true
+codegen-units = 1
+strip = true

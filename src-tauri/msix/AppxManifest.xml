@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  TidyUp's Microsoft Store (MSIX) package manifest. A template: the double-brace placeholders are
+  filled by scripts/build-msix.ps1 from src-tauri/msix/identity.json and package.json.
+  Same approach as Spaceadom (Tauri v2 has no MSIX target; MakeAppx packs a plain layout).
+
+  CONTRACT: desktop:StartupTask/@TaskId MUST equal packaged::STARTUP_TASK_ID in
+  src-tauri/src/packaged.rs. The build script checks this and refuses to pack otherwise.
+
+  runFullTrust is needed because the app is an ordinary Win32 process: it watches and moves
+  files in folders the user chose, shows a tray icon and a transparent toast window. There is
+  no narrower capability that allows a desktop file watcher. No network, no other capability.
+-->
+<Package
+  xmlns="http://schemas.microsoft.com/appx/manifest/foundation/windows10"
+  xmlns:uap="http://schemas.microsoft.com/appx/manifest/uap/windows10"
+  xmlns:desktop="http://schemas.microsoft.com/appx/manifest/desktop/windows10"
+  xmlns:rescap="http://schemas.microsoft.com/appx/manifest/foundation/windows10/restrictedcapabilities"
+  IgnorableNamespaces="uap desktop rescap">
+
+  <Identity
+    Name="{{IDENTITY_NAME}}"
+    Publisher="{{IDENTITY_PUBLISHER}}"
+    Version="{{VERSION}}"
+    ProcessorArchitecture="{{ARCH}}" />
+
+  <Properties>
+    <DisplayName>TidyUp</DisplayName>
+    <PublisherDisplayName>{{PUBLISHER_DISPLAY_NAME}}</PublisherDisplayName>
+    <Logo>Assets\StoreLogo.png</Logo>
+  </Properties>
+
+  <Dependencies>
+    <TargetDeviceFamily Name="Windows.Universal" MinVersion="10.0.17763.0" MaxVersionTested="10.0.26100.0" />
+  </Dependencies>
+
+  <Resources>
+    <Resource Language="en-us" />
+  </Resources>
+
+  <Applications>
+    <Application Id="TidyUp" Executable="tidy.exe" EntryPoint="Windows.FullTrustApplication">
+      <uap:VisualElements
+        DisplayName="TidyUp"
+        Description="Files your downloads into plainly named folders, automatically. Nothing is ever deleted."
+        BackgroundColor="transparent"
+        Square150x150Logo="Assets\Square150x150Logo.png"
+        Square44x44Logo="Assets\Square44x44Logo.png">
+        <uap:DefaultTile
+          Wide310x150Logo="Assets\Wide310x150Logo.png"
+          Square71x71Logo="Assets\Square71x71Logo.png"
+          Square310x310Logo="Assets\Square310x310Logo.png"
+          ShortName="TidyUp" />
+      </uap:VisualElements>
+      <Extensions>
+        <desktop:Extension Category="windows.startupTask" Executable="tidy.exe" EntryPoint="Windows.FullTrustApplication">
+          <desktop:StartupTask TaskId="TidyUpStartupTask" Enabled="true" DisplayName="TidyUp" />
+        </desktop:Extension>
+      </Extensions>
+    </Application>
+  </Applications>
+
+  <Capabilities>
+    <rescap:Capability Name="runFullTrust" />
+  </Capabilities>
+
+</Package>
