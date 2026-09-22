@@ -25,8 +25,10 @@ pub struct Suggestion {
     pub hosts: Vec<String>,
     pub count: usize,
     pub examples: Vec<String>,
-    /// "type" | "site" | "word"
+    /// "type" | "site" | "word" | "split"
     pub kind: &'static str,
+    /// for "split": the card these files land in today, e.g. "3D models"
+    pub out_of: String,
 }
 
 #[derive(Serialize, Debug, Default)]
@@ -78,6 +80,7 @@ pub fn scan(cfg: &Config) -> Scan {
     let rules: Vec<Rule> = cfg.rules.iter().map(|r| { let mut r = r.clone(); if r.builtin { r.enabled = true; } r }).collect();
     let mut hits: HashMap<String, RuleHit> = HashMap::new();
     let mut unmatched: Vec<(PathBuf, String, String)> = vec![]; // path, lower name, ext
+    let mut claimed: HashMap<String, Vec<(PathBuf, String, String)>> = HashMap::new(); // builtin rule id -> its files
     let mut total = 0;
     for folder in &cfg.watched {
         let Ok(rd) = std::fs::read_dir(folder) else { continue };
@@ -93,6 +96,10 @@ pub fn scan(cfg: &Config) -> Scan {
                     let h = hits.entry(r.id.clone()).or_insert_with(|| RuleHit { id: r.id.clone(), count: 0, examples: vec![] });
                     h.count += 1;
                     if h.examples.len() < 2 { h.examples.push(name.clone()); }
+                    if r.builtin {
+                        let ext = p.extension().map(|x| x.to_string_lossy().to_lowercase()).unwrap_or_default();
+                        if !ext.is_empty() { claimed.entry(r.id.clone()).or_default().push((p.clone(), name.to_lowercase(), ext)); }
+                    }
                 }
                 None => {
                     let ext = p.extension().map(|x| x.to_string_lossy().to_lowercase()).unwrap_or_default();
@@ -161,7 +168,10 @@ pub fn scan(cfg: &Config) -> Scan {
         suggestions.push(make("word", &format!("sug-word-{}", word), &format!("Files named \u{201c}{}\u{201d}", word), &folder, vec![], vec![word.clone()], vec![], &idx, &unmatched));
         for i in idx { taken[i] = true; }
     }
-    suggestions.truncate(8);
+    let mut sp = splits(cfg, &claimed);
+    sp.truncate(4);
+    suggestions.truncate(8usize.saturating_sub(sp.len()));
+    suggestions.extend(sp);
 
     let mut left: HashMap<String, usize> = HashMap::new();
     for (i, u) in unmatched.iter().enumerate() { if !taken[i] { *left.entry(if u.2.is_empty() { "(no type)".into() } else { u.2.clone() }).or_default() += 1; } }
@@ -173,7 +183,46 @@ pub fn scan(cfg: &Config) -> Scan {
 
 fn make(kind: &'static str, id: &str, name: &str, folder: &str, extensions: Vec<String>, keywords: Vec<String>, hosts: Vec<String>, idx: &[usize], files: &[(PathBuf, String, String)]) -> Suggestion {
     let examples = idx.iter().take(2).map(|&i| files[i].0.file_name().map(|n| n.to_string_lossy().to_string()).unwrap_or_default()).collect();
-    Suggestion { id: id.into(), name: name.into(), folder: folder.into(), extensions, keywords, hosts, count: idx.len(), examples, kind }
+    Suggestion { id: id.into(), name: name.into(), folder: folder.into(), extensions, keywords, hosts, count: idx.len(), examples, kind, out_of: String::new() }
+}
+
+/// A shipped card can be too broad: "3D models" holding 11 SolidWorks parts and one print.
+/// Offer to lift the dominant family out into its own folder. The new card is a normal custom
+/// rule and goes above the shipped one, which first-match-wins already honours.
+fn splits(cfg: &Config, claimed: &HashMap<String, Vec<(PathBuf, String, String)>>) -> Vec<Suggestion> {
+    let mut out = vec![];
+    for r in cfg.rules.iter().filter(|r| r.builtin) {
+        let Some(files) = claimed.get(&r.id) else { continue };
+        if files.len() < MIN_FILES + 1 { continue; }  // nothing to split off a small pile
+        let mut taken = vec![false; files.len()];
+        let mut here: Vec<(String, String, Vec<String>, Vec<usize>)> = vec![]; // name, folder, exts, idx
+        for (name, folder, exts) in GROUPS {
+            let idx: Vec<usize> = (0..files.len()).filter(|&i| exts.contains(&files[i].2.as_str())).collect();
+            if idx.len() >= MIN_FILES && idx.len() < files.len() {
+                let present: Vec<String> = exts.iter().filter(|e| idx.iter().any(|&i| files[i].2 == **e)).map(|e| e.to_string()).collect();
+                for &i in &idx { taken[i] = true; }
+                here.push((name.to_string(), folder.to_string(), present, idx));
+            }
+        }
+        if here.is_empty() {
+            // no named group: a single extension that dominates still deserves its own folder
+            let mut by_ext: HashMap<String, Vec<usize>> = HashMap::new();
+            for (i, f) in files.iter().enumerate() { if !taken[i] { by_ext.entry(f.2.clone()).or_default().push(i); } }
+            let mut v: Vec<(String, Vec<usize>)> = by_ext.into_iter().filter(|(_, x)| x.len() >= MIN_FILES && x.len() < files.len()).collect();
+            v.sort_by(|a, b| b.1.len().cmp(&a.1.len()).then(a.0.cmp(&b.0)));
+            for (ext, idx) in v.into_iter().take(2) {
+                let label = format!("{} files", ext.to_uppercase());
+                here.push((label.clone(), label, vec![ext], idx));
+            }
+        }
+        for (name, folder, exts, idx) in here {
+            let mut sug = make("split", &format!("sug-split-{}-{}", r.id, folder), &name, &folder, exts, vec![], vec![], &idx, files);
+            sug.out_of = r.folder.clone();
+            out.push(sug);
+        }
+    }
+    out.sort_by(|a, b| b.count.cmp(&a.count));
+    out
 }
 
 /// "moodle.monash.edu" -> "Moodle", "drive.google.com" -> "Google drive", "github.com" -> "Github"
@@ -191,4 +240,44 @@ fn site_label(host: &str) -> String {
 fn capitalise(s: &str) -> String {
     let mut c = s.chars();
     match c.next() { Some(f) => f.to_uppercase().collect::<String>() + c.as_str(), None => String::new() }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn seed(dir: &std::path::Path, names: &[&str]) {
+        std::fs::create_dir_all(dir).unwrap();
+        for n in names { std::fs::write(dir.join(n), b"x").unwrap(); }
+    }
+
+    /// The case Arpon hit: a shipped card ("3D models") swallows 11 SolidWorks parts and one
+    /// print, so nothing used to be suggested. A split should now be offered.
+    #[test]
+    fn splits_a_broad_shipped_card() {
+        let dir = std::env::temp_dir().join("filez-split-test");
+        let _ = std::fs::remove_dir_all(&dir);
+        let mut names: Vec<String> = (1..=11).map(|i| format!("part{i}.SLDPRT")).collect();
+        names.push("bracket.STL".into());
+        names.extend((1..=4).map(|i| format!("game{i}.exe")));
+        names.extend((1..=3).map(|i| format!("shortcut{i}.lnk")));
+        seed(&dir, &names.iter().map(|s| s.as_str()).collect::<Vec<_>>());
+
+        let mut cfg = Config::default();
+        cfg.watched = vec![dir.clone()];
+        cfg.dest_root = dir.clone();
+        let sc = scan(&cfg);
+
+        assert_eq!(sc.total, 19);
+        let split = sc.suggestions.iter().find(|s| s.kind == "split").expect("a split was offered");
+        assert_eq!(split.folder, "SolidWorks");
+        assert_eq!(split.count, 11);
+        assert_eq!(split.out_of, "3D models");
+        assert!(split.extensions.contains(&"sldprt".to_string()));
+        // the unmatched .lnk files still become their own category
+        assert!(sc.suggestions.iter().any(|s| s.kind == "type" && s.folder == "LNK files"));
+        // a card whose files are all one family is left alone (4 .exe = the whole Installers card)
+        assert!(!sc.suggestions.iter().any(|s| s.out_of == "Installers"));
+        let _ = std::fs::remove_dir_all(&dir);
+    }
 }

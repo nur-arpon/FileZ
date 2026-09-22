@@ -13,7 +13,7 @@ type Snapshot = { startup: Startup; config: Config; recent: Entry[]; filed_total
 type FolderInfo = { name: string; path: string; files: number; exists: boolean; empty_since: number | null };
 type Drive = { root: string; free: number; total: number };
 type RuleHit = { id: string; count: number; examples: string[] };
-type Suggestion = { id: string; name: string; folder: string; extensions: string[]; keywords: string[]; hosts: string[]; count: number; examples: string[]; kind: "type" | "site" | "word" };
+type Suggestion = { id: string; name: string; folder: string; extensions: string[]; keywords: string[]; hosts: string[]; count: number; examples: string[]; kind: "type" | "site" | "word" | "split"; out_of: string };
 type Scan = { total: number; hits: RuleHit[]; suggestions: Suggestion[]; leftovers: [string, number][] };
 
 // ---------- state ----------
@@ -91,14 +91,14 @@ async function renderSetup() {
     const hit = (id: string) => sc.hits.find((h) => h.id === id);
     const where = d.watched.length === 1 ? base(d.watched[0]) : "your folders";
     const shipped = d.rules.filter((r) => r.builtin).map((r) => { const h = hit(r.id); return `<button class="pill ${r.enabled ? "on" : ""} ${h ? "" : "dim"}" data-rule="${r.id}" title="${h ? esc(h.examples.join(", ")) : "nothing like this yet"}">${esc(r.name)}${h ? ` <b>${h.count}</b>` : ""}</button>`; }).join("");
-    const sugg = sc.suggestions.map((g) => `<button class="pill sug ${accepted.has(g.id) ? "on" : ""}" data-sug="${g.id}" title="${esc(g.examples.join(", "))}">${esc(g.name)} <b>${g.count}</b><span class="ex">${esc(g.examples.join(", "))}</span></button>`).join("");
+    const sugg = sc.suggestions.map((g) => `<button class="pill sug ${accepted.has(g.id) ? "on" : ""}" data-sug="${g.id}" title="${esc(g.examples.join(", "))}">${esc(g.name)} <b>${g.count}</b><span class="ex">${g.out_of ? `out of ${esc(g.out_of)} \u00b7 ` : ""}${esc(g.examples.join(", "))}</span></button>`).join("");
     const left = sc.leftovers.slice(0, 12).map(([e, n]) => `<button class="pill ghost small" data-left="${esc(e)}" title="Make a category for .${esc(e)} files">.${esc(e)} · ${n}</button>`).join("");
     const custom = d.rules.filter((r) => !r.builtin && !r.id.startsWith("sug-")).map((r) => `<button class="pill ${r.enabled ? "on" : ""}" data-rule="${r.id}">${esc(r.name)}</button>`).join("");
     const tree = d.rules.filter((r) => r.enabled).map((r) => `  ├─ ${esc(r.folder)}`).join("\n");
     body = `<h1>Here’s what’s in ${esc(where)}</h1><p>${sc.total ? `${sc.total} files looked at. Bold numbers are files already there; greyed cards have nothing yet but still catch new downloads. Tap to turn any on or off.` : "Nothing there yet. These are the categories FileZ starts with; tap to turn any on or off."}</p>
       <div class="grid2"><div>
         <div class="card"><div class="pills">${shipped}${custom}</div></div>
-        ${sugg ? `<div class="card"><h2>FileZ noticed these too</h2><p>Made from what is actually in the folder. Tap to add one as a category of its own; rename it later on the Rules page.</p><div class="pills">${sugg}</div></div>` : ""}
+        ${sugg ? `<div class="card"><h2>FileZ noticed these too</h2><p>Made from what is actually in the folder, including families hiding inside a broader category. Tap to give one its own folder; rename it later on the Rules page.</p><div class="pills">${sugg}</div></div>` : ""}
         ${left ? `<div class="card"><h2>Everything else</h2><p>Left where it is. Tap a type to give it a folder.</p><div class="pills">${left}</div></div>` : ""}
       </div>
       <div class="card"><h2>Your folders will look like</h2><div class="tree">${esc(base(d.dest_root))}\n${tree || "  (nothing yet)"}</div></div></div>`;
@@ -205,7 +205,7 @@ function renderRules(main: HTMLElement) {
   el("#scan-now").onclick = async () => {
     const out = el("#scan-out"); out.innerHTML = `<p class="muted">Looking…</p>`;
     let sc: Scan; try { sc = await invoke<Scan>("scan_existing", { config: c }); } catch (err) { out.innerHTML = `<p>${esc(String(err))}</p>`; return; }
-    const sugg = sc.suggestions.map((g) => `<button class="pill sug" data-sug2="${g.id}" title="${esc(g.examples.join(", "))}">${esc(g.name)} <b>${g.count}</b><span class="ex">${esc(g.examples.join(", "))}</span></button>`).join("");
+    const sugg = sc.suggestions.map((g) => `<button class="pill sug" data-sug2="${g.id}" title="${esc(g.examples.join(", "))}">${esc(g.name)} <b>${g.count}</b><span class="ex">${g.out_of ? `out of ${esc(g.out_of)} \u00b7 ` : ""}${esc(g.examples.join(", "))}</span></button>`).join("");
     const left = sc.leftovers.filter(([e]) => e !== "(no type)").slice(0, 12).map(([e, n]) => `<button class="pill ghost small" data-left2="${esc(e)}">.${esc(e)} · ${n}</button>`).join("");
     out.innerHTML = sugg || left ? `${sugg ? `<div class="pills" style="margin-top:10px">${sugg}</div>` : ""}${left ? `<p style="margin-top:10px">Other unsorted types, tap to give one a folder:</p><div class="pills">${left}</div>` : ""}` : `<p style="margin-top:10px">Nothing unsorted is repeating right now. ${sc.total} files looked at.</p>`;
     all("[data-sug2]", out).forEach((b) => (b.onclick = () => { const g = sc.suggestions.find((x) => x.id === b.dataset.sug2)!; if (c.rules.some((r) => r.id === g.id)) return; c.rules.unshift({ id: g.id, name: g.folder, enabled: true, extensions: [...g.extensions], keywords: [...g.keywords], hosts: [...g.hosts], folder: g.folder, wait_secs: 120, builtin: false }); save(c); }));
