@@ -91,3 +91,9 @@ a { color: var(--accent); }
 .toast .ring { width: 22px; height: 22px; flex: none; }
 @keyframes bloom { from { transform: translateY(24px) scale(.6); opacity: 0; } to { transform: none; opacity: 1; } }
 @media (prefers-reduced-motion: reduce) { .toast { animation: none; } .toggle::after { transition: none; } }
+.pill.dim { opacity: 0.55; }
+.pill.dim.on { opacity: 1; }
+.pill b { font-weight: 700; margin-left: 2px; }
+.pill.sug { flex-direction: column; align-items: flex-start; gap: 1px; padding: 8px 14px; white-space: normal; text-align: left; max-width: 300px; }
+.pill.sug .ex { font-size: 11.5px; opacity: 0.7; }
+.pill.sug.on .ex { opacity: 0.85; }
