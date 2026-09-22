@@ -48,7 +48,8 @@ the category folders exactly where they are; nothing of yours is removed.
 
 ## Store version
 
-The Microsoft Store build is the same program. The Store handles installation and updates;
+The [Microsoft Store build](https://apps.microsoft.com/detail/9MVK3ST0Z29J) is the same program,
+packaged as MSIX and signed by Microsoft. The Store handles installation and updates;
 FileZ itself still has no network code. Start-with-Windows in the Store version is managed
 by Windows (Settings > Apps > Startup).
 

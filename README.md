@@ -54,12 +54,15 @@ Windows 10/11, x64. Built with Rust and Tauri v2. No analytics, no ads, no netwo
 
 ## Install
 
-Download the latest **`FileZ_*_x64-setup.exe`** from
-[Releases](../../releases) and run it. It installs into your own user folder and never asks
-for an admin password. Windows will warn that the publisher is unknown, because the build is
-not code-signed: choose **More info → Run anyway**.
+**Microsoft Store (recommended):** [Get FileZ](https://apps.microsoft.com/detail/9MVK3ST0Z29J).
+Signed by the Store, updates come by themselves, no publisher warning.
 
-A Microsoft Store listing is in progress.
+[![Get it from Microsoft](https://get.microsoft.com/images/en-us%20dark.svg)](https://apps.microsoft.com/detail/9MVK3ST0Z29J?mode=direct)
+
+**Without the Store:** download the latest **`FileZ_*_x64-setup.exe`** from
+[Releases](../../releases) and run it. It installs into your own user folder and never asks
+for an admin password. Windows will warn that the publisher is unknown, because that build is
+not code-signed: choose **More info → Run anyway**.
 
 ## Privacy and security
 
