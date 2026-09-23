@@ -12,6 +12,9 @@ type Startup = { packaged: boolean; state: string; locked: boolean; note: string
 type Snapshot = { startup: Startup; config: Config; recent: Entry[]; filed_total: number; filed_today: number; waiting: Waiting[]; paused: boolean; version: string };
 type FolderInfo = { name: string; path: string; files: number; exists: boolean; empty_since: number | null };
 type Drive = { root: string; free: number; total: number };
+type RuleHit = { id: string; count: number; examples: string[] };
+type Suggestion = { id: string; name: string; folder: string; extensions: string[]; keywords: string[]; hosts: string[]; count: number; examples: string[]; kind: "type" | "site" | "word" | "split"; out_of: string };
+type Scan = { total: number; hits: RuleHit[]; suggestions: Suggestion[]; leftovers: [string, number][] };
 
 // ---------- state ----------
 let snap: Snapshot;
@@ -20,6 +23,9 @@ let setupStep = 0;
 let draft: Config | null = null; // wizard copy
 let existingChoice: "new" | "all" = "new";
 let existingCount: number | null = null;
+let scan: Scan | null = null;       // what the wizard found in the watched folders
+let scanFor = "";                   // watched-folder list the scan belongs to
+let accepted = new Set<string>();   // suggestion ids turned into rules
 const app = document.getElementById("app")!;
 
 // ---------- helpers ----------
@@ -74,10 +80,27 @@ async function renderSetup() {
     body = `<h1>Which folders should FileZ watch?</h1><p>New files landing in these folders get filed. Folders inside them are never touched.</p>
       <div class="card"><div class="list">${rows}${extra}</div><div class="row" style="margin-top:12px"><button class="pill" id="add-watch">Choose another folder</button></div></div>`;
   } else if (setupStep === 1) {
-    const chips = d.rules.map((r) => `<button class="pill ${r.enabled ? "on" : ""}" data-rule="${r.id}">${esc(r.name)}</button>`).join("");
+    const key = d.watched.join("|");
+    if (!scan || scanFor !== key) {
+      try { scan = await invoke<Scan>("scan_existing", { config: d }); } catch { scan = { total: 0, hits: [], suggestions: [], leftovers: [] }; }
+      scanFor = key;
+      // first look: turn on every shipped card that has files waiting for it
+      for (const h of scan.hits) { const r = d.rules.find((x) => x.id === h.id); if (r && r.builtin && h.count > 0) r.enabled = true; }
+    }
+    const sc = scan;
+    const hit = (id: string) => sc.hits.find((h) => h.id === id);
+    const where = d.watched.length === 1 ? base(d.watched[0]) : "your folders";
+    const shipped = d.rules.filter((r) => r.builtin).map((r) => { const h = hit(r.id); return `<button class="pill ${r.enabled ? "on" : ""} ${h ? "" : "dim"}" data-rule="${r.id}" title="${h ? esc(h.examples.join(", ")) : "nothing like this yet"}">${esc(r.name)}${h ? ` <b>${h.count}</b>` : ""}</button>`; }).join("");
+    const sugg = sc.suggestions.map((g) => `<button class="pill sug ${accepted.has(g.id) ? "on" : ""}" data-sug="${g.id}" title="${esc(g.examples.join(", "))}">${esc(g.name)} <b>${g.count}</b><span class="ex">${g.out_of ? `out of ${esc(g.out_of)} \u00b7 ` : ""}${esc(g.examples.join(", "))}</span></button>`).join("");
+    const left = sc.leftovers.slice(0, 12).map(([e, n]) => `<button class="pill ghost small" data-left="${esc(e)}" title="Make a category for .${esc(e)} files">.${esc(e)} · ${n}</button>`).join("");
+    const custom = d.rules.filter((r) => !r.builtin && !r.id.startsWith("sug-")).map((r) => `<button class="pill ${r.enabled ? "on" : ""}" data-rule="${r.id}">${esc(r.name)}</button>`).join("");
     const tree = d.rules.filter((r) => r.enabled).map((r) => `  ├─ ${esc(r.folder)}`).join("\n");
-    body = `<h1>What should it sort?</h1><p>Tap to turn a category on or off. You can change this later.</p>
-      <div class="grid2"><div class="card"><div class="pills">${chips}</div></div>
+    body = `<h1>Here’s what’s in ${esc(where)}</h1><p>${sc.total ? `${sc.total} files looked at. Bold numbers are files already there; greyed cards have nothing yet but still catch new downloads. Tap to turn any on or off.` : "Nothing there yet. These are the categories FileZ starts with; tap to turn any on or off."}</p>
+      <div class="grid2"><div>
+        <div class="card"><div class="pills">${shipped}${custom}</div></div>
+        ${sugg ? `<div class="card"><h2>FileZ noticed these too</h2><p>Made from what is actually in the folder, including families hiding inside a broader category. Tap to give one its own folder; rename it later on the Rules page.</p><div class="pills">${sugg}</div></div>` : ""}
+        ${left ? `<div class="card"><h2>Everything else</h2><p>Left where it is. Tap a type to give it a folder.</p><div class="pills">${left}</div></div>` : ""}
+      </div>
       <div class="card"><h2>Your folders will look like</h2><div class="tree">${esc(base(d.dest_root))}\n${tree || "  (nothing yet)"}</div></div></div>`;
   } else {
     const drives = await invoke<Drive[]>("drives");
@@ -97,6 +120,19 @@ async function renderSetup() {
   all<HTMLInputElement>("[data-watch]").forEach((c) => (c.onchange = () => { const p = c.dataset.watch!; d.watched = c.checked ? [...new Set([...d.watched, p])] : d.watched.filter((w) => w !== p); }));
   el("#add-watch")?.addEventListener("click", async () => { const p = await pickFolder({ directory: true }); if (typeof p === "string") { d.watched = [...new Set([...d.watched, p])]; renderSetup(); } });
   all("[data-rule]").forEach((b) => (b.onclick = () => { const r = d.rules.find((x) => x.id === b.dataset.rule)!; r.enabled = !r.enabled; existingCount = null; renderSetup(); }));
+  all("[data-sug]").forEach((b) => (b.onclick = () => {
+    const g = scan!.suggestions.find((x) => x.id === b.dataset.sug)!;
+    if (accepted.has(g.id)) { accepted.delete(g.id); d.rules = d.rules.filter((r) => r.id !== g.id); }
+    else { accepted.add(g.id); d.rules.unshift({ id: g.id, name: g.folder, enabled: true, extensions: [...g.extensions], keywords: [...g.keywords], hosts: [...g.hosts], folder: g.folder, wait_secs: 120, builtin: false }); }
+    existingCount = null; renderSetup();
+  }));
+  all("[data-left]").forEach((b) => (b.onclick = () => {
+    const e = b.dataset.left!; if (e === "(no type)") return;
+    const name = `${e.toUpperCase()} files`;
+    d.rules.unshift({ id: "custom-" + e, name, enabled: true, extensions: [e], keywords: [], hosts: [], folder: name, wait_secs: 120, builtin: false });
+    scan!.leftovers = scan!.leftovers.filter(([x]) => x !== e);
+    existingCount = null; renderSetup();
+  }));
   el("#dest-inside")?.addEventListener("click", () => { d.dest_root = d.watched[0] ?? d.dest_root; existingCount = null; renderSetup(); });
   all("[data-existing]").forEach((b) => (b.onclick = () => { existingChoice = b.dataset.existing as "new" | "all"; renderSetup(); }));
   all("[data-drive]").forEach((b) => (b.onclick = () => { d.dest_root = b.dataset.drive + "FileZ"; existingCount = null; renderSetup(); }));
@@ -164,7 +200,17 @@ function renderRules(main: HTMLElement) {
       ${r.builtin ? "" : `<div class="row" style="margin-top:8px"><button class="pill ghost" data-del="${r.id}">Remove this rule</button></div>`}</div></div>`;
   }).join("");
   main.innerHTML = `<h1>Rules</h1><p>Top to bottom, first match wins. A file matches a card when its type, a word in its name, or the website it came from is listed. Files that match nothing stay where they are.</p>${cards}
-    <div class="card"><div class="row"><b>Add your own rule</b><input class="folder" id="new-name" placeholder="Name, e.g. Invoices" style="width:220px"><button class="pill primary" id="new-rule">Add</button></div><p style="margin-top:8px">Then add file types, words or websites to it above. New rules go to a folder with the same name.</p></div>`;
+    <div class="card"><div class="row"><b>Add your own rule</b><input class="folder" id="new-name" placeholder="Name, e.g. Invoices" style="width:220px"><button class="pill primary" id="new-rule">Add</button></div><p style="margin-top:8px">Then add file types, words or websites to it above. New rules go to a folder with the same name.</p></div>
+    <div class="card"><div class="row between"><div><h2>Let FileZ suggest categories</h2><p>Looks at what is piling up unsorted in ${esc(from)} and offers a card for anything that repeats.</p></div><button class="pill" id="scan-now">Look now</button></div><div id="scan-out"></div></div>`;
+  el("#scan-now").onclick = async () => {
+    const out = el("#scan-out"); out.innerHTML = `<p class="muted">Looking…</p>`;
+    let sc: Scan; try { sc = await invoke<Scan>("scan_existing", { config: c }); } catch (err) { out.innerHTML = `<p>${esc(String(err))}</p>`; return; }
+    const sugg = sc.suggestions.map((g) => `<button class="pill sug" data-sug2="${g.id}" title="${esc(g.examples.join(", "))}">${esc(g.name)} <b>${g.count}</b><span class="ex">${g.out_of ? `out of ${esc(g.out_of)} \u00b7 ` : ""}${esc(g.examples.join(", "))}</span></button>`).join("");
+    const left = sc.leftovers.filter(([e]) => e !== "(no type)").slice(0, 12).map(([e, n]) => `<button class="pill ghost small" data-left2="${esc(e)}">.${esc(e)} · ${n}</button>`).join("");
+    out.innerHTML = sugg || left ? `${sugg ? `<div class="pills" style="margin-top:10px">${sugg}</div>` : ""}${left ? `<p style="margin-top:10px">Other unsorted types, tap to give one a folder:</p><div class="pills">${left}</div>` : ""}` : `<p style="margin-top:10px">Nothing unsorted is repeating right now. ${sc.total} files looked at.</p>`;
+    all("[data-sug2]", out).forEach((b) => (b.onclick = () => { const g = sc.suggestions.find((x) => x.id === b.dataset.sug2)!; if (c.rules.some((r) => r.id === g.id)) return; c.rules.unshift({ id: g.id, name: g.folder, enabled: true, extensions: [...g.extensions], keywords: [...g.keywords], hosts: [...g.hosts], folder: g.folder, wait_secs: 120, builtin: false }); save(c); }));
+    all("[data-left2]", out).forEach((b) => (b.onclick = () => { const e = b.dataset.left2!; const name = `${e.toUpperCase()} files`; c.rules.unshift({ id: "custom-" + e, name, enabled: true, extensions: [e], keywords: [], hosts: [], folder: name, wait_secs: 120, builtin: false }); save(c); }));
+  };
   all("[data-toggle]").forEach((b) => (b.onclick = () => { const r = c.rules.find((x) => x.id === b.dataset.toggle)!; r.enabled = !r.enabled; save(c); }));
   all("[data-wait]").forEach((b) => (b.onclick = () => { const [id, w] = b.dataset.wait!.split(":"); c.rules.find((x) => x.id === id)!.wait_secs = Number(w); save(c); }));
   all<HTMLInputElement>("[data-folder]").forEach((i) => (i.onchange = () => { const r = c.rules.find((x) => x.id === i.dataset.folder)!; r.folder = i.value.trim() || r.name; save(c); }));

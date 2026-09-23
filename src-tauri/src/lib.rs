@@ -4,6 +4,7 @@ mod config;
 mod engine;
 mod fsutil;
 mod packaged;
+mod suggest;
 
 use config::Config;
 use engine::{Entry, Msg, Shared, State};
@@ -108,6 +109,9 @@ fn apply_autostart(app: &AppHandle, want: bool) {
 
 #[tauri::command]
 fn count_existing(config: Config) -> usize { let mut c = config; c.normalise(); engine::count_existing(&c) }
+
+#[tauri::command]
+fn scan_existing(config: Config) -> suggest::Scan { let mut c = config; c.normalise(); suggest::scan(&c) }
 
 #[tauri::command]
 fn set_paused(shared: tauri::State<Shared>, paused: bool, minutes: Option<u64>) {
@@ -215,7 +219,7 @@ pub fn run() {
         .plugin(tauri_plugin_autostart::init(tauri_plugin_autostart::MacosLauncher::LaunchAgent, Some(vec!["--hidden"])))
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_opener::init())
-        .invoke_handler(tauri::generate_handler![get_state, save_config, set_paused, tidy_now, undo, undo_since, folder_tree, drives, known_folders, hide_toast, preview_toast, log_frontend, count_existing])
+        .invoke_handler(tauri::generate_handler![get_state, save_config, set_paused, tidy_now, undo, undo_since, folder_tree, drives, known_folders, hide_toast, preview_toast, log_frontend, count_existing, scan_existing])
         .setup(move |app| {
             let handle = app.handle().clone();
             if let Some(rx) = rx.lock().unwrap().take() { engine::start(handle.clone(), shared.clone(), rx); }
